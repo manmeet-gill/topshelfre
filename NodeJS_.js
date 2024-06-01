@@ -7,45 +7,71 @@ const request = require('supertest');
 
 let books = [];
 
+//get the list of all books
 app.get('/books', (req, res) => {
+    res.status(200).json(books);
 });
 
+//common method to search for a book with id
+function findBookById(id) {
+    return books.find(b => b.id === parseInt(id));
+}
+
+// get a book by id
 app.get('/books/:id', (req, res) => {
+    const book = findBookById(req.params.id);
+    if (!book) return res.status(404).send('Book not found');
+    res.status(200).json(book);
 });
 
+// add a book to books(also check if the book extsts before)
 app.post('/books', (req, res) => {
+    const bookId = req.body.id;
+    
+    // Checking if the ID already exists in the books array
+    const existingBook = findBookById(bookId);
+    if (existingBook) {
+        return res.status(400).send('Book with this ID already exists');
+    }
+   
+    // If ID does not exist, add the new book
+    //geting these references from the test code. 
+    const book = {
+        id: bookId,
+        title: req.body.title,
+        author: req.body.author,
+        published_date: req.body.published_date,
+        price: req.body.price
+    };
+    books.push(book);
+    res.status(201).json(book);
 });
 
+//function used to update a book with an id
 app.put('/books/:id', (req, res) => {
+    const book = findBookById(req.params.id);
+    //if book not found
+    if (!book) return res.status(404).send('Book not found');
+    // if book is found
+    book.title = req.body.title;
+    book.author = req.body.author;
+    book.published_date = req.body.published_date;
+    book.price = req.body.price;
+    res.status(200).json(book);
 });
 
+//delete a book from books
 app.delete('/books/:id', (req, res) => {
+    const book = findBookById(req.params.id);
+    if (!book) return res.status(404).send('Book not found');
+    const index = books.indexOf(book);
+    books.splice(index, 1);
+    res.status(200).json(book);
 });
 
 app.listen(3000, () => console.log('Server running on port 3000'));
 
-
-
-
-let books = [];
-
-app.get('/books', (req, res) => {
-});
-
-app.get('/books/:id', (req, res) => {
-});
-
-app.post('/books', (req, res) => {
-});
-
-app.put('/books/:id', (req, res) => {
-});
-
-app.delete('/books/:id', (req, res) => {
-});
-
-app.listen(3000, () => console.log('Server running on port 3000'));
-
+//tests
 describe('Test the book store API', () => {
 	test('Test POST /books', () => {
     	return request(app)
